@@ -75,6 +75,9 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     out["cnt_lag_7"] = out[TARGET].shift(LAG_WARMUP)
     out["cnt_roll_7"] = out[TARGET].shift(1).rolling(LAG_WARMUP).mean()
 
+    # Two-day lag: for prediction at date d, cnt on d-2 is always known.
+    out["cnt_lag_2"] = out[TARGET].shift(2)
+
     return out.dropna().reset_index(drop=True)
 
 
