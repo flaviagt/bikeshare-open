@@ -43,6 +43,18 @@ def test_lags_are_true_calendar_lags(feats):
     assert checked > 600, "too few rows actually verified"
 
 
+def test_cnt_lag_2_is_true_two_day_lag(feats):
+    """cnt_lag_2 on date d must equal cnt exactly two calendar days prior."""
+    by_date = feats.set_index("dteday")[TARGET]
+    checked = 0
+    for date, lag in feats.set_index("dteday").cnt_lag_2.items():
+        prev = date - pd.Timedelta(days=2)
+        if prev in by_date.index:
+            assert lag == pytest.approx(by_date[prev]), f"bad cnt_lag_2 at {date.date()}"
+            checked += 1
+    assert checked > 300, "too few rows actually verified for cnt_lag_2"
+
+
 def test_lag_is_not_the_target(feats):
     assert not (feats.cnt_lag_1 == feats[TARGET]).all()
 
