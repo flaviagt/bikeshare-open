@@ -162,3 +162,50 @@ The original tests passed despite the missing guard. Adding a
 targeted test demonstrated the coverage gap and verified that
 unexpected weather labels should raise an error rather than
 silently becoming missing values.
+
+
+## Fault 4: Bash Copy Bypass
+
+### Objective
+Determine whether a Bash `cp` command can modify files
+inside `data/raw/` without triggering the PostToolUse hook.
+
+### Attempted Command
+`cp /tmp/fault4_probe.txt data/raw/fault4_probe.txt`
+
+### Actual Result
+Claude Code returned:
+
+```text
+Error: Permission to use Bash with command
+cp /tmp/fault4_probe.txt data/raw/fault4_probe.txt
+has been denied.
+```
+
+The command was blocked before execution. No file was
+created inside `data/raw/`.
+
+### Hook Response
+The PostToolUse leakage hook did not execute because
+the Bash command was denied before it could run.
+
+This attempt therefore did not demonstrate a successful
+bypass, but it showed that the permission system blocked
+the requested operation.
+
+### Potential Vulnerability
+The existing PostToolUse hook monitors Edit/Write operations,
+not arbitrary filesystem modifications through Bash.
+
+If a Bash copy were permitted, the Edit/Write hook would
+not automatically validate that modification.
+
+### Potential Mitigations
+- A PreToolUse hook that inspects Bash commands
+- A Stop hook that verifies repository integrity
+- Filesystem-level write restrictions
+- Hash checks on raw datasets
+
+### Conclusion
+The attempted Bash copy was blocked by Claude Code's
+permission system, rather than by the leakage hook.
