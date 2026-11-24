@@ -109,3 +109,56 @@ Expected: 4414.857142857143
 
 ### Takeaway
 The experiment demonstrated that excluding the current day's target from rolling features is necessary to prevent data leakage. The test successfully caught the incorrect calculation because it compares the rolling mean against the seven preceding calendar days.
+
+
+## Fault 3: Missing Weather Validation
+
+### Objective
+Determine whether the tests detect unexpected weather labels
+when the encoder's validation guard is removed.
+
+### Intentional Change
+File: `src/features.py`
+
+Removed the guard that checks for unknown weather labels and
+raises ValueError. Without this guard, unknown labels are
+silently mapped to NaN.
+
+### Initial Test Results
+Command: `make test`
+
+15 passed in 1.46s
+
+The original test suite did not detect the fault.
+
+### Additional Test
+Added `test_unknown_weather_raises` to `tests/test_leakage.py`.
+
+Command:
+`python -m pytest tests/test_leakage.py::test_unknown_weather_raises -v`
+
+Actual failing output:
+
+```text
+tests/test_leakage.py::test_unknown_weather_raises FAILED
+
+E   Failed: DID NOT RAISE ValueError
+
+tests/test_leakage.py:83: Failed
+
+1 failed in 0.57s
+```
+
+### PostToolUse Hook Stderr
+[Paste actual hook stderr, or state that none was observed.]
+
+### Recovery
+- Fix: Restored the weather encoder's validation guard.
+- Agent turns to fix: 2
+- Tests after recovery: 16
+
+### Takeaway
+The original tests passed despite the missing guard. Adding a
+targeted test demonstrated the coverage gap and verified that
+unexpected weather labels should raise an error rather than
+silently becoming missing values.
